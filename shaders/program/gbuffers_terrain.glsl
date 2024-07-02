@@ -202,6 +202,10 @@ float GetLuminance(vec3 color) {
 	#endif
 #endif
 
+#define TEXSYN_ENABLE
+
+
+
 //Program//
 void main() {
 	vec4 albedo = vec4(0.0);
@@ -210,7 +214,12 @@ void main() {
 			albedo.rgb = texture2D(texture, texCoord).rgb;
 			albedo.a = texture2DLod(texture, texCoord, 0).a; // For BetterEnd compatibility
 		#else
-			albedo = texture2D(texture, texCoord);
+			#ifdef TEXSYN_ENABLE
+				ivec3 blockPosFrag = ivec3(floor(worldPos + cameraPosition + 0.001));
+				albedo.rgb = TilingAndBlending(texture, texCoord, blockPosFrag).rgb;
+			#else
+				albedo = texture2D(texture, texCoord);
+			#endif
 		#endif
 	} else {
 		albedo = texture2DLod(texture, texCoord, 0);
