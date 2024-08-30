@@ -164,6 +164,7 @@ float GetLuminance(vec3 color) {
 #include "/lib/util/spaceConversion.glsl"
 #include "/lib/color/waterColor.glsl"
 #include "/lib/lighting/forwardLighting.glsl"
+#include "/lib/surface/texsyn.glsl"
 
 #if AA == 2 || AA == 3
 	#include "/lib/util/jitter.glsl"
@@ -205,25 +206,104 @@ float GetLuminance(vec3 color) {
 #define TEXSYN_ENABLE
 
 
+// ---------------------------------------------------
+// Varyings
+varying vec4 vEntity;
+// ---------------------------------------------------
+
+
+// Include the UV values from the external file
+#include "/lib/surface/uv_values.glsl"
+
+
 
 //Program//
 void main() {
+	vec3 screenPos = vec3(gl_FragCoord.xy / vec2(viewWidth, viewHeight), gl_FragCoord.z);
+	#if AA > 1
+		vec3 viewPos = ScreenToView(vec3(TAAJitter(screenPos.xy, -0.5), screenPos.z));
+	#else
+		vec3 viewPos = ScreenToView(screenPos);
+	#endif
+	vec3 worldPos = ViewToWorld(viewPos);
+	float lViewPos = length(viewPos.xyz);
 	vec4 albedo = vec4(0.0);
+
+
+	
+
+
 	if (mipmapDisabling < 0.25) {
-		#if defined END && defined COMPATIBILITY_MODE && !defined SEVEN
-			albedo.rgb = texture2D(texture, texCoord).rgb;
-			albedo.a = texture2DLod(texture, texCoord, 0).a; // For BetterEnd compatibility
-		#else
-			#ifdef TEXSYN_ENABLE
-				ivec3 blockPosFrag = ivec3(floor(worldPos + cameraPosition + 0.001));
-				albedo.rgb = TilingAndBlending(texture, texCoord, blockPosFrag).rgb;
+			#if defined END && defined COMPATIBILITY_MODE && !defined SEVEN
+				albedo.rgb = texture2DLod(texture, texCoord,0.0).rgb;
+				albedo.a = texture2DLod(texture, texCoord, 0).a; // For BetterEnd compatibility
 			#else
-				albedo = texture2D(texture, texCoord);
+				#ifdef TEXSYN_ENABLE
+				ivec3 blockPosFrag = ivec3(floor(worldPos + cameraPosition + 0.001));
+				// albedo.rgba = TilingAndBlending(texture, texCoord, blockPosFrag).rgba;
+
+
+				bool applyTilingAndBlending = false;
+
+				// Loop through normal blocks
+				for (int i = 0; i < NUM_NORMAL_BLOCKS; i++) {
+					vec2 minUVValue = minUVNormal(i);
+					vec2 maxUVValue = maxUVNormal(i);
+
+					if (texCoord.x >= minUVValue.x && texCoord.x <= maxUVValue.x && texCoord.y >= minUVValue.y && texCoord.y <= maxUVValue.y) {
+						applyTilingAndBlending = true;
+						albedo.rgba = TilingAndBlendingNormal(texture, texCoord, blockPosFrag).rgba;
+						break;
+					}
+				}
+
+				// Loop through 4 bricks blocks
+				if (!applyTilingAndBlending) {
+					for (int i = 0; i < NUM_4BRICKS_BLOCKS; i++) {
+						vec2 minUVValue = minUV4Bricks(i);
+						vec2 maxUVValue = maxUV4Bricks(i);
+
+						if (texCoord.x >= minUVValue.x && texCoord.x <= maxUVValue.x && texCoord.y >= minUVValue.y && texCoord.y <= maxUVValue.y) {
+							applyTilingAndBlending = true;
+							albedo.rgba = TilingAndBlending4Bricks(texture, texCoord, blockPosFrag).rgba;
+							break;
+						}
+					}
+				}
+
+				// Loop through 2 bricks blocks
+				if (!applyTilingAndBlending) {
+					for (int i = 0; i < NUM_2BRICKS_BLOCKS; i++) {
+						vec2 minUVValue = minUV2Bricks(i);
+						vec2 maxUVValue = maxUV2Bricks(i);
+
+						if (texCoord.x >= minUVValue.x && texCoord.x <= maxUVValue.x && texCoord.y >= minUVValue.y && texCoord.y <= maxUVValue.y) {
+							applyTilingAndBlending = true;
+							albedo.rgba = TilingAndBlending2Bricks(texture, texCoord, blockPosFrag).rgba;
+							break;
+						}
+					}
+				}
+
+				if (!applyTilingAndBlending) {
+					// albedo.rgb = texture2DLod(texture, texCoord, 0).rgb;
+					// albedo.a = texture2DLod(texture, texCoord, 0).a;
+					albedo.rgba = TilingAndBlending2Bricks(texture, texCoord, blockPosFrag).rgba;
+
+				}
+
+			#else
+				albedo = texture2DLod(texture, texCoord,0.0).rgb;
 			#endif
 		#endif
 	} else {
 		albedo = texture2DLod(texture, texCoord, 0);
 	}
+
+
+
+
+
 	vec3 albedoP = albedo.rgb;
 	if (mat < 10000.0) albedo.rgb *= color.rgb;
 	albedo.rgb = clamp(albedo.rgb, vec3(0.0), vec3(1.0));
@@ -348,15 +428,6 @@ void main() {
 		#endif
 
 		//Main
-		vec3 screenPos = vec3(gl_FragCoord.xy / vec2(viewWidth, viewHeight), gl_FragCoord.z);
-		#if AA > 1
-			vec3 viewPos = ScreenToView(vec3(TAAJitter(screenPos.xy, -0.5), screenPos.z));
-		#else
-			vec3 viewPos = ScreenToView(screenPos);
-		#endif
-		vec3 worldPos = ViewToWorld(viewPos);
-		float lViewPos = length(viewPos.xyz);
-
 		float materialAO = 1.0;
 		float cauldron = 0.0;
 		float snowFactor = 0.0;
@@ -704,6 +775,13 @@ uniform mat4 gbufferModelView, gbufferModelViewInverse;
 attribute vec4 mc_Entity;
 attribute vec4 mc_midTexCoord;
 
+
+// -----------------------------------------------------
+// Varyings
+varying vec4 vEntity;
+
+// -----------------------------------------------------
+
 #ifdef ADV_MAT
 	attribute vec4 at_tangent;
 #endif
@@ -741,6 +819,12 @@ attribute vec4 mc_midTexCoord;
 
 //Program//
 void main() {
+
+	//-----------------------------------------------------
+	vEntity = mc_Entity; // Pass mc_Entity to the fragment shader
+	//-----------------------------------------------------
+
+
 	vec4 position = gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex;
 	
 	#if THE_FORBIDDEN_OPTION > 1
