@@ -4,6 +4,9 @@
 
 This project focuses on texture synthesis in Minecraft using Complementary Shaders v4, with a particular emphasis on Tiling and Blending techniques. The project was forked from Nicolas Lutz's original implementation of Tiling and Blending, and further developed as part of an internship at the University of Sherbrooke. The goal of this project was to tweak and improve the results of the texture synthesis process, ultimately enhancing the visual quality of textures in Minecraft.
 
+![1](https://github.com/user-attachments/assets/a80b860b-1dcd-4252-8651-437c0b3228f7)
+
+
 ## Project Background
 
 Minecraft is known for its blocky, pixelated aesthetic, which relies heavily on texture atlases to define the appearance of different blocks. While this aesthetic is iconic, it can lead to visible repetition in textures, especially when large areas of the same block type are used. Tiling and Blending techniques offer a solution to this issue by creating more seamless transitions between textures and reducing the visual repetition.
@@ -26,30 +29,26 @@ During my internship at the University of Sherbrooke, I was responsible for:
 
 ### Implementation Details
 
-- **TilingAndBlending Function**: The core of this project lies in the `TilingAndBlending` function, which handles the seamless tiling and blending of textures based on UV coordinates and block positions.
+- **TilingAndBlending Function**: The core of this project lies in the `TilingAndBlending` function, which handles the seamless tiling and blending of textures based on UV coordinates and block positions (made by **Nicolas Lutz**).
 - **Block Categorization**: Blocks are categorized into three groups—normal blocks, 4 bricks blocks, and 2 bricks blocks—each using a different Tiling and Blending method tailored to its characteristics.
 - **Improved UV Handling**: The project includes optimizations for handling UV coordinates more effectively, ensuring that textures align correctly across block boundaries.
+- **Fixing bugs and artefacts**: My job was to debug and improve the existing Tiling adn blending function , adat it to different blocks, and fix artifacts and some bugs.
 
 ## Results
 
 The improvements made during this internship have resulted in significantly enhanced texture synthesis in Minecraft Complementary Shaders v4. The new Tiling and Blending techniques produce more seamless and visually appealing textures, with reduced repetition and improved transitions between different blocks.
 
-### Removing artifacts 
+![2](https://github.com/user-attachments/assets/b1f69c2c-84d6-4563-92f2-296b7c8c986c)
 
-
-
-- **Before**: [Insert images showing visible seams and repetitive patterns]
-- **After**: [Insert images showing seamless transitions and improved textures]
+![3](https://github.com/user-attachments/assets/5516d138-ab80-42c6-81ee-b75ccffbc983)
 
 ## How to Use
 
-1. **Installation**: Clone this repository and place the shader files into your Minecraft shaderpacks folder.
-2. **Configuration**: Ensure that Complementary Shaders v4 is selected in your Minecraft settings. The Tiling and Blending techniques will automatically be applied to the relevant blocks.
-3. **Customization**: You can adjust various parameters within the shader code to fine-tune the Tiling and Blending effects to your preference.
+1. The same way you download Complemantary sahders, just replace the og files with the repo
 
 ## Acknowledgments
 
-This project was developed as part of an internship at the University of Sherbrooke, under the guidance of [Supervisor's Name, if applicable]. The project builds on the work of Nicolas Lutz, whose original implementation of Tiling and Blending provided the foundation for these improvements.
+This project was developed as part of an internship at the University of Sherbrooke, under the guidance of **Nicoalas Lutz**. The project builds on the work of Nicolas Lutz, whose original implementation of Tiling and Blending provided the foundation for these improvements.
 
 ## License
 
